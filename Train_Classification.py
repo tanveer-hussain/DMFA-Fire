@@ -1,7 +1,7 @@
 from Model import DMFA
 from tqdm import tqdm
 from torch.utils.data import DataLoader
-from CustomDataGenerator import DatasetLoader
+from CustomDataGenerator import ClassifierDatasetLoader
 from torch.autograd import Variable
 from torch import nn
 import torch
@@ -56,7 +56,7 @@ if __name__ == '__main__':
     weight_decay = 1e-3
     l1_criterion = nn.L1Loss().cuda()
     cel = nn.CrossEntropyLoss().cuda()
-    DFModel = DMFA.DFModel().cuda()
+    DFModel = DMFA.DFClassifier().cuda()
     DFOptimizer = torch.optim.Adam(DFModel.parameters(), lr=base_lr, weight_decay=weight_decay, betas=(0.9, 0.95))
     # dataset_name = "FLAMES dataset (UAV)"
     # dataset_name = "Yar"
@@ -69,8 +69,8 @@ if __name__ == '__main__':
     val_losses = []
     train_losses = []
     d_type = ['Train', 'Test']
-    total_train_data = DatasetLoader(dataset_path, d_type[0])
-    total_test_data = DatasetLoader(dataset_path, d_type[1])
+    total_train_data = ClassifierDatasetLoader(dataset_path, d_type[0])
+    total_test_data = ClassifierDatasetLoader(dataset_path, d_type[1])
 
     save_results_path = r"D:\Research Group\Research circle\MBZUAI\Weights/TempResults.dat"
 
@@ -93,19 +93,11 @@ if __name__ == '__main__':
             images = Variable(images).cuda()
             lbl = Variable(lbl).cuda()
             cls = Variable(cls).cuda()
-            # depths = Variable(depths).cuda()
-            # y_CLASS, y_SEG = DFModel.forward(images)
             y_CLASS = DFModel.forward(images)
-            
-            # visualize_output(y_SEG)
-            # visualize_gt(lbl)
-            # y_CLASS = DFModel.forward(images)
 
-            # seg_loss = l1_criterion(y_SEG, lbl)
+
             cls_loss = cel(y_CLASS, cls)
-            # loss = seg_loss + cls_loss
             DFOptimizer.zero_grad()
-            # cls_loss.backward()
             loss = cls_loss
             loss.backward()
             DFOptimizer.step()
@@ -163,7 +155,7 @@ if __name__ == '__main__':
             # datasets = ["FLAMES dataset (UAV)"]
 
             # dataset_path = os.path.join(r'D:\My Research\Datasets\Fire and smoke', datasets[0])  # Tanveer path
-            DFModel = DFNet.DFModel().to('cuda')
+            DFModel = DMFA.DFClassifier().to('cuda')
             DFModel.load_state_dict(
                 torch.load(save_path + 'FLAMESClassification_%d' % epoch + 'Weights.pth'))
             # d_type = ['Train', 'Test']
