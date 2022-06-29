@@ -88,11 +88,10 @@ if __name__ == '__main__':
         valid_correct = 0.0
         DFModel.train()
         train_loop = tqdm(enumerate(train_loader, start=1), total=len(train_loader), leave=False)
-        for batch_id, (images, w, h, cls, lbl, index) in train_loop:
+        for batch_id, (x , y) in train_loop:
 
-            images = Variable(images).cuda()
-            lbl = Variable(lbl).cuda()
-            cls = Variable(cls).cuda()
+            images = Variable(x).cuda()
+            cls = Variable(y).cuda()
             y_CLASS = DFModel.forward(images)
 
 
@@ -170,17 +169,17 @@ if __name__ == '__main__':
             train_loss = 0.0
             # since we're not training, we don't need to calculate the gradients for our outputs
             with torch.no_grad():
-                for (images, w, h, cls, lbl, index) in testloader:
-                    images = images.to('cuda')
-                    cls = cls.to('cuda')
+                for (x , y) in testloader:
+                    images = x.to('cuda')
+                    y = y.to('cuda')
                     # calculate outputs by running images through the network
-                    classification_output, segmentation_output = DFModel(images)
+                    classification_output = DFModel(images)
                     # the class with the highest energy is what we choose as prediction
                     _, predicted = torch.max(classification_output.data, 1)
                     total += cls.size(0)
                     correct += (predicted == cls).sum().item()
 
-                    cls_loss = cel(classification_output, cls)
+                    cls_loss = cel(classification_output, y)
 
                     # train_loss += cls_loss.item()
 
